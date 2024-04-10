@@ -22,6 +22,11 @@ public class Auth {
     System.out.println("Usuário registrado.\n \n");
   }
 
+  public void logout(User user) {
+    user.authenticated = false;
+    System.out.println("Usuário deslogado.\n \n");
+  }
+
   public void authenticate(User user) {
     if (user == null) {
       System.out.println("Usuário não encontrado.\n \n");

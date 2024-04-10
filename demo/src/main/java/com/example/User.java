@@ -28,21 +28,61 @@ public class User {
     Scanner sc = new Scanner(System.in);
     sc.useDelimiter("\n");
     System.out.println("Dê um nome para seu artigo: ");
-    String nome = sc.next();
+    String nome = sc.nextLine();
     System.out.println("Escreva seu artigo: ");
-    String texto = sc.next();
-    sc.close();
+    String texto = sc.nextLine();
 
-    String file_name = nome + ".txt";
-    File file = new File(file_name);
+    String file_name = nome.replace(" ", "_") + ".txt";
+    File file = new File("artigos/" + file_name);
 
     try (FileWriter writer = new FileWriter(file)) {
+      writer.write("Autor: " + this.username + "\n");
       writer.write(texto);
       writer.close();
+      System.out.printf("Artigo salvo com sucesso: %s", file_name);
     } catch (Exception e) {
       e.printStackTrace();
     }
 
+  }
+
+  public void deletar() {
+    if (!this.isEditor()) {
+      System.out.println("Acesso negado: Você não tem permissão para deletar artigos.");
+      return;
+    }
+    Scanner sc = new Scanner(System.in);
+    System.out.println("Digite o nome do artigo que deseja deletar: ");
+    String input_file_name = sc.nextLine();
+    String file_name = input_file_name + ".txt";
+    File file = new File("artigos/" + file_name);
+
+    if (file.exists()) {
+      if (file.delete()) {
+        System.out.println("Artigo deletado com sucesso.");
+      } else {
+        System.out.println("Falha ao deletar artigo.");
+      }
+    } else {
+      System.out.println("Artigo não encontrado.");
+    }
+  }
+
+  public void ler() {
+    Scanner sc = new Scanner(System.in);
+    System.out.println("Digite o nome do artigo que deseja ler. Digite sem a extensão de arquivo (.txt, .csv, .pdf...):");
+    String file_name = sc.nextLine() + ".txt";
+    File file = new File("artigos/" + file_name);
+    try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+      String line;
+      System.out.printf("\nNome do artigo: %s\n", file_name);
+      while ((line = reader.readLine()) != null) {
+        System.out.println(line);
+      }
+      System.out.println("\n");
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   public String getUsername() {
@@ -82,10 +122,17 @@ public class User {
   }
 
   public boolean isEditor() {
-    if (permission.equals("editor")) {
-      return true;
+    if (this.permission == null) {
+      this.permission = this.getPermissionFromCSVString(this.username);
+      if (this.permission.equals("editor")) {
+        return true;
+      }
+      return false;
+    } else {
+      if (this.permission.equals("editor")) {
+        return true;
+      }
+      return false;
     }
-    return false;
   }
-
 }
