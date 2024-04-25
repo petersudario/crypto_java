@@ -31,7 +31,8 @@ public class User {
     String nome = sc.nextLine();
     System.out.println("Escreva seu artigo: ");
     String texto = sc.nextLine();
-
+    System.out.println("Deseja que o artigo seja privado? (s/n)");
+    String askedPermission = sc.nextLine();
     String file_name = nome.replace(" ", "_") + ".txt";
     File file = new File("artigos/" + file_name);
 
@@ -40,6 +41,25 @@ public class User {
       writer.write(texto);
       writer.close();
       System.out.printf("Artigo salvo com sucesso: %s", file_name);
+      String permission;
+      if (askedPermission.equals("s")) {
+        permission = "private";
+      } else {
+        permission = "public";
+      }
+
+      try (FileWriter csvWriter = new FileWriter("articlePermission.csv", true)) {
+        csvWriter.append(this.username);
+        csvWriter.append(",");
+        csvWriter.append(permission);
+        csvWriter.append(",");
+        csvWriter.append(file_name);
+        csvWriter.append("\n");
+        csvWriter.flush();
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -72,6 +92,10 @@ public class User {
     Scanner sc = new Scanner(System.in);
     System.out.println("Digite o nome do artigo que deseja ler. Digite sem a extensão de arquivo (.txt, .csv, .pdf...):");
     String file_name = sc.nextLine() + ".txt";
+    if (!this.isAllowedToRead(this.username, file_name)) {
+      System.out.println("Acesso negado: Você não tem permissão para ler este artigo.");
+      return;
+    }
     File file = new File("artigos/" + file_name);
     try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
       String line;
@@ -120,6 +144,30 @@ public class User {
   public boolean isAuthenticated() {
     return this.authenticated;
   }
+
+  public boolean isAllowedToRead(String username, String file_name) {
+
+    try (BufferedReader br = new BufferedReader(new FileReader("articlePermission.csv"))) {
+        String line;
+        while ((line = br.readLine()) != null) {
+          String[] data = line.split(",");
+          if (data.length == 3 && data[2].equals(file_name)) {
+            if (data[1].equals("public")) {
+              return true;
+            }
+            if (data[1].equals("private") && data[0].equals(username)) {
+              return true;
+            }
+          }
+        }
+      } catch (IOException e) {
+      System.out.println("Error reading articlePermission.csv file.");
+      e.printStackTrace();
+    }
+    return false;
+    
+  }
+
 
   public boolean isEditor() {
     if (this.permission == null) {
